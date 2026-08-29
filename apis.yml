@@ -12,6 +12,18 @@ description: >-
   Kubernetes operator, and Docker images. It is licensed AGPL-3.0 and self-hosted; the same engine
   is sold as the managed Grafana Cloud Logs service and as the self-managed Grafana Enterprise Logs
   distribution.
+deliveryModel:
+  model: unknown
+  open_source: unknown
+  commercial: true
+  callable_host: false
+  label: Delivery model not determined — needs a product licence on record
+  confidence: low
+  source:
+  - pricing
+  - repository-unlicensed
+  generated: '2026-08-28'
+  method: derived
 image: https://grafana.com/media/docs/loki/logo-grafana-loki.png
 url: https://raw.githubusercontent.com/api-evangelist/grafana-loki/refs/heads/main/apis.yml
 x-type: company
