@@ -1,0 +1,89 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/pricing/
+name: Grafana Loki plans and pricing
+description: >-
+  Grafana Loki the software is free and open source under AGPLv3 — there is no plan, quota or price
+  attached to running it yourself. The commercial surfaces are Grafana Cloud Logs, the fully managed
+  Loki service, and Grafana Enterprise Logs, the self-managed commercial distribution. The tiers
+  below are the Grafana Cloud Logs tiers as published on the Grafana Labs pricing page.
+currency: USD
+oss:
+  name: Grafana Loki (self-hosted)
+  price: 0
+  license: AGPL-3.0
+  license_url: https://github.com/grafana/loki/blob/main/LICENSE
+  note: >-
+    No account, quota, or commercial relationship required. All rate limits are operator-configured
+    (see rate-limits/grafana-loki-rate-limits.yml).
+plans:
+  - name: Free
+    product: Grafana Cloud Logs
+    price: 0
+    billing_period: month
+    included_quota: 50 GB ingested per month
+    included_quota_bytes_per_month: 53687091200
+    retention: 14 days
+    overage: none
+    support: Community support
+    signup_requires_card: false
+    limits:
+      - 'Limited to 50 GB logs ingested per month'
+      - '14 day retention'
+    url: https://grafana.com/pricing/
+  - name: Pro
+    product: Grafana Cloud Logs
+    price: 19
+    price_note: Platform fee per month; usage billed on top
+    billing_period: month
+    included_quota: 50 GB ingested per month, then pay as you go
+    included_quota_bytes_per_month: 53687091200
+    retention: 30 days
+    support: 8x5 email support
+    overage:
+      model: usage-based, per GB, with automatic volume discounts
+      dimensions:
+        - dimension: Process
+          description: Work done to receive, process and optimize the signals sent by your systems.
+          tiers:
+            - {range: '1 - 10,000 GB', rate_per_gb: 0.050}
+            - {range: '10,001 - 25,000 GB', rate_per_gb: 0.046}
+            - {range: '25,001+ GB', rate_per_gb: 0.044}
+        - dimension: Write
+          description: Work done to write only the useful data to the database.
+          tiers:
+            - {range: '1 - 1,000 GB', rate_per_gb: 0.400}
+            - {range: '1,001 - 2,500 GB', rate_per_gb: 0.370}
+            - {range: '2,501+ GB', rate_per_gb: 0.355}
+        - dimension: Retain
+          description: Work done to retain and protect your stored data over time.
+          tiers:
+            - {range: '1 - 5,000 GB', rate_per_gb: 0.100}
+            - {range: '5,001 - 12,500 GB', rate_per_gb: 0.092}
+            - {range: '12,501+ GB', rate_per_gb: 0.088}
+    url: https://grafana.com/pricing/
+  - name: Enterprise
+    product: Grafana Cloud Logs / Grafana Enterprise Logs
+    price: null
+    price_note: Custom. Minimum commit of $25,000 per year.
+    minimum_annual_commit: 25000
+    billing_period: year
+    included_quota: Scalable unit price based on annual commit
+    retention: Custom retention
+    support: Premium support
+    limits:
+      - 'Deployment flexibility (Public Cloud, Federal Cloud, or Bring Your Own Cloud)'
+      - 'Adaptive Logs: optimize log ingest by up to 50%'
+    url: https://grafana.com/pricing/
+plan_count: 3
+notes:
+  - >-
+    Grafana Cloud Logs prices four work dimensions — Process, Write, Retain and Query. Only the first
+    three carry published per-GB rate cards on the pricing page.
+  - >-
+    Adaptive Logs is the ingest-optimization feature Grafana Labs markets as reducing log ingest by
+    up to 50%; it is what makes the Pro usage bill controllable.
+docs:
+  - https://grafana.com/pricing/
+  - https://grafana.com/legal/grafana-cloud-sla/
+checked: '2026-08-27'

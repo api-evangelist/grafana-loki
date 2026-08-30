@@ -1,0 +1,142 @@
+generated: '2026-08-27'
+method: derived
+source: >-
+  mcp/grafana-loki-mcp.yml (tool list from grafana/mcp-grafana) bound to the endpoints published in
+  https://grafana.com/docs/loki/latest/reference/loki-http-api/ and the RPCs in
+  grpc/grafana-loki-logproto.proto
+name: Grafana Loki MCP-to-API tool crosswalk
+description: >-
+  Binds each Loki MCP tool exposed by the Grafana Labs MCP servers to the Loki HTTP endpoint (and,
+  where one exists, the gRPC RPC) that backs it. Grafana Loki publishes no OpenAPI, so the `rest`
+  column carries the documented HTTP method + path from the Loki HTTP API reference rather than an
+  operationId; `grpc` carries the RPC name from the published protobuf service definitions.
+surfaces:
+  openapi:
+    present: false
+    note: >-
+      Grafana Loki publishes no OpenAPI/Swagger document. Probed for one on grafana.com
+      (/openapi.json, /swagger.json — HTTP 404 SPA shell) and scanned the full grafana/loki git tree
+      (21,041 paths): the only OpenAPI artifacts are vendored go-openapi Go libraries, not a spec.
+  http_reference:
+    url: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+    gated: false
+    endpoint_count: 40
+  grpc:
+    files:
+      - grpc/grafana-loki-push.proto
+      - grpc/grafana-loki-logproto.proto
+      - grpc/grafana-loki-rules.proto
+    services: [Pusher, Querier, StreamData]
+    rpc_count: 14
+    gated: false
+  graphql:
+    present: false
+  mcp:
+    url: https://mcp.grafana.com/mcp
+    gated: true
+    gate: 'HTTP 401 invalid_token — OAuth 2.1 bearer required for tools/list'
+crosswalk:
+  - tool: query_loki_logs
+    category: Loki
+    rest:
+      - 'GET /loki/api/v1/query_range'
+      - 'GET /loki/api/v1/query'
+    grpc: ['Querier.Query', 'Querier.QuerySample']
+    binding: direct
+    confidence: high
+    note: >-
+      tools/loki.go builds a LogQL query with start/end/limit/direction/step and calls the Loki
+      query endpoints; step is only sent for metric queries, matching query_range semantics.
+  - tool: list_loki_label_names
+    category: Loki
+    rest: ['GET /loki/api/v1/labels']
+    grpc: ['Querier.Label']
+    binding: direct
+    confidence: high
+  - tool: list_loki_label_values
+    category: Loki
+    rest: ['GET /loki/api/v1/label/{name}/values']
+    grpc: ['Querier.Label']
+    binding: direct
+    confidence: high
+  - tool: query_loki_stats
+    category: Loki
+    rest: ['GET /loki/api/v1/index/stats']
+    grpc: ['Querier.GetStats']
+    binding: direct
+    confidence: high
+  - tool: query_loki_patterns
+    category: Loki
+    rest: ['GET /loki/api/v1/patterns']
+    grpc: []
+    binding: direct
+    confidence: high
+  - tool: analyze_loki_labels
+    category: Loki
+    rest:
+      - 'GET /loki/api/v1/labels'
+      - 'GET /loki/api/v1/label/{name}/values'
+      - 'GET /loki/api/v1/index/stats'
+    grpc: []
+    binding: composite
+    confidence: medium
+    note: >-
+      Documented as auditing a label strategy live or from a static config and diagnosing query
+      performance; it reads the label and index surfaces. Mapped by documented behaviour, not by a
+      confirmed call trace, because the live tool schema is auth-gated.
+mcp_only:
+  - tool: suggest_loki_alloy_label_config
+    reason: >-
+      Generates a Grafana Alloy `loki.process` configuration snippet. It produces configuration, not
+      a Loki API call, and has no backing Loki HTTP or gRPC operation.
+rest_only:
+  - endpoints: ['POST /loki/api/v1/push', 'POST /otlp/v1/logs']
+    reason: Log ingestion. No MCP tool writes log data; the Grafana MCP surface is read/query only.
+  - endpoints: ['GET /loki/api/v1/series']
+    reason: Stream/series enumeration has no MCP tool.
+  - endpoints: ['GET /loki/api/v1/index/volume', 'GET /loki/api/v1/index/volume_range']
+    reason: Log volume queries have no MCP tool.
+  - endpoints: ['GET /loki/api/v1/tail']
+    reason: WebSocket log tailing; MCP has no streaming tail tool.
+  - endpoints: ['GET /loki/api/v1/detected_fields', 'GET /loki/api/v1/detected_field/{name}/values']
+    reason: Detected-fields surface has no dedicated Loki MCP tool.
+  - endpoints:
+      - 'GET /loki/api/v1/rules'
+      - 'GET /loki/api/v1/rules/{namespace}'
+      - 'GET /loki/api/v1/rules/{namespace}/{groupName}'
+      - 'POST /loki/api/v1/rules/{namespace}'
+      - 'DELETE /loki/api/v1/rules/{namespace}/{groupName}'
+      - 'DELETE /loki/api/v1/rules/{namespace}'
+      - 'GET /prometheus/api/v1/rules'
+      - 'GET /prometheus/api/v1/alerts'
+    reason: Ruler management. Reached through Grafana alerting tools, not through the Loki tool family.
+  - endpoints: ['POST /loki/api/v1/delete', 'GET /loki/api/v1/delete', 'DELETE /loki/api/v1/delete']
+    reason: Log deletion is destructive and is deliberately absent from the MCP tool surface.
+  - endpoints:
+      - 'GET /ready'
+      - 'GET /metrics'
+      - 'GET /config'
+      - 'GET /services'
+      - 'GET /log_level'
+      - 'GET /loki/api/v1/status/buildinfo'
+      - 'GET /loki/api/v1/format_query'
+      - 'GET /distributor/ring'
+      - 'GET /indexgateway/ring'
+      - 'GET /ruler/ring'
+      - 'GET /compactor/ring'
+      - 'POST /flush'
+      - 'POST /ingester/prepare_shutdown'
+      - 'POST /ingester/shutdown'
+    reason: Operational, ring and lifecycle endpoints. Operator surface, not an agent surface.
+coverage:
+  mcp_tools_total: 7
+  mcp_tools_bound_to_rest: 6
+  mcp_only: 1
+  rest_endpoints_total: 40
+  rest_endpoints_with_tool: 7
+  rest_only_endpoints: 33
+  note: >-
+    The MCP projection is read-only and covers roughly 18% of the documented HTTP surface. Everything
+    that writes (push, OTLP ingest, ruler writes, deletion) and everything operational is REST/gRPC
+    only.
+checked: '2026-08-27'

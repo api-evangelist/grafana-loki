@@ -1,0 +1,191 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/
+name: Grafana Loki rate limits
+description: >-
+  Grafana Loki is self-hosted software, so every rate limit is operator-configured per tenant rather
+  than fixed by a vendor. Loki publishes both the limit semantics and the shipped default value for
+  each one in its configuration reference, which is what an agent needs to predict a 429 before it
+  happens. Limits are enforced per tenant (identified by the X-Scope-OrgID header) by the
+  distributor and ingester components.
+enforcement:
+  scope: per-tenant
+  tenant_header: X-Scope-OrgID
+  components: [distributor, ingester]
+  status_on_exhaustion: 429
+  status_on_validation_failure: 400
+  status_on_oversize_body: 413
+response_headers:
+  published: false
+  note: >-
+    Loki does not document any X-RateLimit-* or RateLimit-* response headers and does not document a
+    Retry-After header on 429. The runtime signal Loki does publish is Prometheus metrics: the
+    counters loki_discarded_samples_total and loki_discarded_bytes_total carry a `reason` label whose
+    values are the identifiers in errors/grafana-loki-problem-types.yml, scraped from GET /metrics.
+    An agent cannot read its remaining budget from a response; it must observe 429 + reason and back
+    off. This is a real gap in the runtime signal.
+  observed_headers: []
+  retry_after: false
+rate_limits:
+  - name: ingestion_rate_mb
+    scope: per-tenant
+    window: per-second
+    limit: 4
+    unit: MB/s
+    burst: 6
+    burst_unit: MB
+    burst_config: ingestion_burst_size_mb
+    status: 429
+    reason: rate_limited
+    enforced_by: distributor
+    retryable: true
+    configurable_per_tenant: true
+    note: Shipped default. Operators routinely raise this.
+  - name: per_stream_rate_limit
+    scope: per-stream
+    window: per-second
+    limit: 3
+    unit: MB/s
+    burst: 15
+    burst_unit: MB
+    burst_config: per_stream_rate_limit_burst
+    status: 429
+    reason: per_stream_rate_limit
+    enforced_by: ingester
+    retryable: true
+    configurable_per_tenant: true
+  - name: max_global_streams_per_user
+    scope: per-tenant
+    window: concurrent
+    limit: 5000
+    unit: active streams
+    status: 429
+    reason: stream_limit
+    enforced_by: ingester
+    retryable: true
+    configurable_per_tenant: true
+    note: 'An active stream is one that received a line within chunk_idle_period (default 30m).'
+  - name: max_line_size
+    scope: per-log-line
+    window: per-request
+    limit: 262144
+    unit: bytes
+    limit_display: 256KB
+    status: 400
+    reason: line_too_long
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_label_names_per_series
+    scope: per-stream
+    window: per-request
+    limit: 15
+    unit: labels
+    status: 400
+    reason: max_label_names_per_series
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_label_name_length
+    scope: per-label
+    window: per-request
+    limit: 1024
+    unit: bytes
+    status: 400
+    reason: label_name_too_long
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_label_value_length
+    scope: per-label
+    window: per-request
+    limit: 2048
+    unit: bytes
+    status: 400
+    reason: label_value_too_long
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_structured_metadata_size
+    scope: per-log-line
+    window: per-request
+    limit: 65536
+    unit: bytes
+    limit_display: 64KB
+    status: 400
+    reason: structured_metadata_too_large
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_structured_metadata_entries_count
+    scope: per-log-line
+    window: per-request
+    limit: 128
+    unit: entries
+    status: 400
+    reason: structured_metadata_too_many
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: creation_grace_period
+    scope: per-sample
+    window: timestamp
+    limit: 600
+    unit: seconds
+    limit_display: 10m
+    status: 400
+    reason: too_far_in_future
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+  - name: reject_old_samples_max_age
+    scope: per-sample
+    window: timestamp
+    limit: 604800
+    unit: seconds
+    limit_display: 1w
+    status: 400
+    reason: greater_than_max_sample_age
+    enforced_by: distributor
+    retryable: false
+    configurable_per_tenant: true
+    note: 'Only enforced while reject_old_samples is true (the shipped default).'
+  - name: max_entries_limit_per_query
+    scope: per-query
+    window: per-request
+    limit: 5000
+    unit: log entries
+    status: 400
+    reason: null
+    enforced_by: querier
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_query_series
+    scope: per-query
+    window: per-request
+    limit: 500
+    unit: series
+    status: 400
+    reason: null
+    enforced_by: querier
+    retryable: false
+    configurable_per_tenant: true
+  - name: max_query_length
+    scope: per-query
+    window: query time range
+    limit: 2595600
+    unit: seconds
+    limit_display: 30d1h
+    status: 400
+    reason: null
+    enforced_by: query-frontend
+    retryable: false
+    configurable_per_tenant: true
+limit_count: 14
+cloud_note: >-
+  Grafana Cloud Logs (the hosted Loki service) applies its own per-plan limits on top of these; the
+  Free tier is capped at 50 GB ingested per month. See plans/grafana-loki-plans-pricing.yml.
+docs:
+  - https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/
+  - https://grafana.com/docs/loki/latest/configure/
+checked: '2026-08-27'

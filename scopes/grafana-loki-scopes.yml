@@ -1,0 +1,62 @@
+generated: '2026-08-27'
+method: probed
+source: https://mcp.grafana.com/.well-known/oauth-authorization-server
+name: Grafana Loki OAuth scopes and access policy scopes
+description: >-
+  Grafana Loki itself has no OAuth surface. Two scope vocabularies govern access to Loki data: the
+  OAuth 2.1 scopes published by the hosted Grafana Cloud MCP server (read anonymously from its
+  RFC 8414 authorization-server metadata), and the Grafana Cloud / Grafana Enterprise Logs access
+  policy scopes named in the Loki HTTP API reference for the logs surface.
+oauth:
+  issuer: https://mcp.grafana.com/mcp
+  authorization_endpoint: https://mcp.grafana.com/mcp/oauth/authorize
+  token_endpoint: https://mcp.grafana.com/mcp/oauth/token
+  registration_endpoint: https://mcp.grafana.com/mcp/oauth/register
+  grant_types: [authorization_code, refresh_token]
+  code_challenge_methods: [S256]
+  token_endpoint_auth_methods: [none, client_secret_basic, client_secret_post]
+  dynamic_client_registration: true
+  metadata_probed:
+    - {url: 'https://mcp.grafana.com/.well-known/oauth-authorization-server', status: 200}
+    - {url: 'https://mcp.grafana.com/.well-known/oauth-protected-resource', status: 200}
+scopes:
+  - name: grafana:read
+    vocabulary: mcp-oauth
+    description: Read Grafana resources through the hosted Grafana Cloud MCP server.
+    source: https://mcp.grafana.com/.well-known/oauth-authorization-server
+  - name: grafana:query
+    vocabulary: mcp-oauth
+    description: >-
+      Execute datasource queries through the hosted Grafana Cloud MCP server. This is the scope the
+      Loki query tools (query_loki_logs, query_loki_stats, query_loki_patterns,
+      list_loki_label_names, list_loki_label_values) run under.
+    source: https://mcp.grafana.com/.well-known/oauth-authorization-server
+  - name: grafana:write
+    vocabulary: mcp-oauth
+    description: Write Grafana resources through the hosted Grafana Cloud MCP server.
+    source: https://mcp.grafana.com/.well-known/oauth-authorization-server
+  - name: logs:read
+    vocabulary: grafana-cloud-access-policy
+    description: Read/query logs for a tenant on Grafana Cloud Logs or Grafana Enterprise Logs.
+    source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  - name: logs:write
+    vocabulary: grafana-cloud-access-policy
+    description: Push logs for a tenant on Grafana Cloud Logs or Grafana Enterprise Logs.
+    source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  - name: logs:delete
+    vocabulary: grafana-cloud-access-policy
+    description: >-
+      Required on the access policy behind the token used with the log deletion endpoints
+      (POST/GET/DELETE /loki/api/v1/delete) for the tenant named in the Basic auth user field.
+    source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+rbac_scopes_mcp:
+  note: >-
+    Inside Grafana, every Loki MCP tool additionally requires the RBAC action datasources:query
+    scoped to the Loki datasource UID (datasources:uid:loki-uid).
+  action: datasources:query
+  scope: 'datasources:uid:loki-uid'
+scope_count: 6
+docs:
+  - https://grafana.com/docs/grafana-cloud/ai-tools/mcp-servers/cloud-mcp/
+  - https://grafana.com/docs/loki/latest/reference/loki-http-api/
+checked: '2026-08-27'

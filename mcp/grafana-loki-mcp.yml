@@ -1,0 +1,123 @@
+generated: '2026-08-27'
+method: searched
+source: https://github.com/grafana/mcp-grafana
+name: Grafana Loki MCP surface
+description: >-
+  Grafana Loki does not itself ship an MCP server. The Loki query surface reaches MCP clients
+  through the Grafana Labs MCP servers, which expose Loki as a datasource: the open-source
+  grafana/mcp-grafana server (local stdio / SSE / streamable-http) and the fully hosted Grafana
+  Cloud MCP server at https://mcp.grafana.com/mcp (OAuth 2.1, streamable HTTP only). Both are
+  first-party Grafana Labs software; the Loki tool family below is registered by
+  tools/loki.go in grafana/mcp-grafana.
+status: published
+deployment:
+  mode: both
+  endpoint: https://mcp.grafana.com/mcp
+  install: 'GOBIN="$HOME/go/bin" go install github.com/grafana/mcp-grafana/cmd/mcp-grafana@latest'
+  install_alternate: 'docker run --rm -i -e GRAFANA_URL=<url> -e GRAFANA_SERVICE_ACCOUNT_TOKEN=<token> grafana/mcp-grafana -t stdio'
+  package: https://github.com/grafana/mcp-grafana
+  auth: oauth
+  verified: probed
+  probe:
+    url: https://mcp.grafana.com/mcp
+    method: 'POST {"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+    http_status: 401
+    body: '{"error":"invalid_token","error_description":"missing or invalid Bearer token"}'
+    note: >-
+      tools/list is auth-gated, so live inputSchema introspection needs an authorized token. The
+      tool names, descriptions and required Grafana RBAC scopes below are read verbatim from the
+      published tool table in the grafana/mcp-grafana README and from tools/loki.go.
+  oauth:
+    protected_resource_metadata: https://mcp.grafana.com/.well-known/oauth-protected-resource
+    authorization_server_metadata: https://mcp.grafana.com/.well-known/oauth-authorization-server
+    issuer: https://mcp.grafana.com/mcp
+    scopes: [grafana:read, grafana:query, grafana:write]
+    grant_types: [authorization_code, refresh_token]
+    pkce: S256
+    dynamic_client_registration: true
+  transports:
+    remote: [streamable-http]
+    local: [stdio, sse, streamable-http]
+  self_hosted_note: >-
+    The hosted Grafana Cloud MCP server works only with hosted Grafana Cloud stacks. A self-hosted
+    Loki reached through a self-hosted Grafana instance needs the open-source grafana/mcp-grafana
+    server run locally.
+servers:
+  - name: Grafana Cloud MCP server
+    url: https://mcp.grafana.com/mcp
+    docs: https://grafana.com/docs/grafana-cloud/ai-tools/mcp-servers/cloud-mcp/
+    transport: streamable-http
+    auth: oauth2.1
+    first_party: true
+  - name: grafana/mcp-grafana (open source)
+    repository: https://github.com/grafana/mcp-grafana
+    docs: https://grafana.com/docs/grafana/latest/developer-resources/mcp/
+    latest_release: v1.2.0
+    released: '2026-08-25'
+    license: Apache-2.0
+    transport: [stdio, sse, streamable-http]
+    auth: api-key
+    auth_detail: 'GRAFANA_URL + GRAFANA_SERVICE_ACCOUNT_TOKEN environment variables'
+    first_party: true
+tools:
+  - name: query_loki_logs
+    category: Loki
+    description: Query and retrieve logs using LogQL (either log or metric queries)
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: GET /loki/api/v1/query_range
+  - name: list_loki_label_names
+    category: Loki
+    description: List all available label names in logs
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: GET /loki/api/v1/labels
+  - name: list_loki_label_values
+    category: Loki
+    description: List values for a specific log label
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: 'GET /loki/api/v1/label/<name>/values'
+  - name: query_loki_stats
+    category: Loki
+    description: Get statistics about log streams
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: GET /loki/api/v1/index/stats
+  - name: query_loki_patterns
+    category: Loki
+    description: Query detected log patterns to identify common structures
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: GET /loki/api/v1/patterns
+  - name: analyze_loki_labels
+    category: Loki
+    description: Audit a Loki label strategy (live or static) and optionally diagnose query performance
+    rbac_action: datasources:query
+    rbac_scope: 'datasources:uid:loki-uid'
+    backing_http: null
+    note: Composite tool; no single backing Loki HTTP operation.
+  - name: suggest_loki_alloy_label_config
+    category: Config
+    description: 'Generate an Alloy `loki.process` snippet enforcing approved labels'
+    rbac_action: null
+    rbac_scope: null
+    backing_http: null
+    note: Generative/config tool; no backing Loki HTTP operation.
+guardrails:
+  note: >-
+    grafana/mcp-grafana ships a Loki-specific query cost guardrail because Loki does not enforce
+    max_query_bytes_read on log queries without a line filter.
+  flags:
+    - name: --loki-guardrail-mode
+      default: 'off'
+      values: [off, shadow, enforce]
+    - name: --loki-guardrail-max-bytes
+      default: 107374182400
+      unit: bytes
+    - name: --loki-guardrail-max-range
+      default: 24h
+    - name: --max-loki-log-limit
+      default: 100
+tool_count: 7
+checked: '2026-08-27'
