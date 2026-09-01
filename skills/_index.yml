@@ -1,0 +1,71 @@
+generated: '2026-08-27'
+method: generated
+source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+name: Grafana Loki agent skills
+description: >-
+  Packaged operating instructions for the marquee Grafana Loki flows, grounded in the endpoints
+  published in the Loki HTTP API reference. Grafana Loki publishes no OpenAPI, so each skill's
+  `operations` list carries the documented HTTP method and path rather than an operationId; every
+  path listed was read from the reference, none was inferred. Two provider-published agent files are
+  saved here verbatim alongside them.
+skills:
+  - file: grafana-loki-query-logs.md
+    name: grafana-loki-query-logs
+    method: generated
+    description: Run a LogQL query over a time range, after checking what it will cost.
+    operations:
+      - 'GET /loki/api/v1/labels'
+      - 'GET /loki/api/v1/label/{name}/values'
+      - 'GET /loki/api/v1/format_query'
+      - 'GET /loki/api/v1/index/stats'
+      - 'GET /loki/api/v1/query_range'
+      - 'GET /loki/api/v1/query'
+  - file: grafana-loki-push-logs.md
+    name: grafana-loki-push-logs
+    method: generated
+    description: Ingest log lines without getting them silently discarded.
+    operations:
+      - 'POST /loki/api/v1/push'
+      - 'POST /otlp/v1/logs'
+      - 'GET /ready'
+      - 'GET /metrics'
+  - file: grafana-loki-delete-logs.md
+    name: grafana-loki-delete-logs
+    method: generated
+    description: Submit a log deletion request and cancel it inside the stated 24-hour window.
+    operations:
+      - 'POST /loki/api/v1/delete'
+      - 'GET /loki/api/v1/delete'
+      - 'DELETE /loki/api/v1/delete'
+  - file: grafana-loki-manage-alerting-rules.md
+    name: grafana-loki-manage-alerting-rules
+    method: generated
+    description: Read and write ruler rule groups over the Prometheus-compatible API.
+    operations:
+      - 'GET /loki/api/v1/rules'
+      - 'GET /loki/api/v1/rules/{namespace}'
+      - 'GET /loki/api/v1/rules/{namespace}/{groupName}'
+      - 'POST /loki/api/v1/rules/{namespace}'
+      - 'DELETE /loki/api/v1/rules/{namespace}/{groupName}'
+      - 'DELETE /loki/api/v1/rules/{namespace}'
+      - 'GET /prometheus/api/v1/rules'
+      - 'GET /prometheus/api/v1/alerts'
+      - 'GET /ruler/ring'
+provider_published:
+  - file: grafana-loki-AGENTS.md
+    method: searched
+    source: https://github.com/grafana/loki/blob/main/AGENTS.md
+    description: >-
+      Grafana Labs' own AGENTS.md for the Loki repository. Saved verbatim. Note its scope: it is a
+      CONTRIBUTOR instruction file — Go version, make targets, import ordering, conventional commits,
+      docs standards — not operating instructions for calling the Loki API. It tells an agent how to
+      write Loki, not how to use it.
+  - file: grafana-loki-cursor-go-SKILL.md
+    method: searched
+    source: https://github.com/grafana/loki/blob/main/.cursor/skills/go/SKILL.md
+    description: >-
+      Grafana Labs' packaged Cursor skill for working in the Loki Go codebase. Saved verbatim. Same
+      scope caveat as AGENTS.md: contributor-facing, not consumer-facing.
+skill_count: 4
+provider_published_count: 2
+checked: '2026-08-27'

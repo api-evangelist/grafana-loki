@@ -1,0 +1,95 @@
+generated: '2026-08-27'
+method: probed
+source: direct HTTP probes of /.well-known/* on every Grafana Labs host that fronts a Grafana Loki surface
+name: Grafana Loki well-known documents
+description: >-
+  Probe record for RFC 8615 /.well-known/ documents across the hosts that serve Grafana Loki
+  surfaces. Grafana Loki itself is self-hosted software with no fixed public host, so the probes
+  run against the Grafana Labs documentation/marketing host (grafana.com) and against the Grafana
+  Labs remote MCP server (mcp.grafana.com) which exposes Loki query tools. The MCP host publishes
+  real OAuth 2.0 protected-resource and authorization-server metadata; grafana.com serves an
+  SPA 404 shell for every /.well-known/ path.
+hosts:
+  - host: grafana.com
+    note: >-
+      Grafana Labs documentation and marketing host. Every /.well-known/ path returns HTTP 404 with
+      the site's HTML 404 shell (102,571 bytes of <!doctype html>), so none of these is a document.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+        file: null
+      - path: /.well-known/openid-configuration
+        status: 404
+        file: null
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+        file: null
+      - path: /.well-known/api-catalog
+        status: 404
+        file: null
+      - path: /.well-known/ai-plugin.json
+        status: 404
+        file: null
+      - path: /.well-known/agent-card.json
+        status: 404
+        file: null
+      - path: /.well-known/agent.json
+        status: 404
+        file: null
+  - host: mcp.grafana.com
+    note: >-
+      Grafana Labs hosted remote MCP server (endpoint https://mcp.grafana.com/mcp). It publishes
+      RFC 9728 OAuth 2.0 Protected Resource Metadata and RFC 8414 Authorization Server Metadata
+      anonymously; both parse as real JSON documents and declare the scopes grafana:read,
+      grafana:query and grafana:write.
+    documents:
+      - path: /.well-known/oauth-protected-resource
+        status: 200
+        file: grafana-loki-oauth-protected-resource.json
+      - path: /.well-known/oauth-protected-resource/mcp
+        status: 200
+        file: grafana-loki-oauth-protected-resource.json
+      - path: /.well-known/oauth-authorization-server
+        status: 200
+        file: grafana-loki-oauth-authorization-server.json
+      - path: /.well-known/security.txt
+        status: 404
+        file: null
+      - path: /.well-known/openid-configuration
+        status: 404
+        file: null
+      - path: /.well-known/api-catalog
+        status: 404
+        file: null
+      - path: /.well-known/ai-plugin.json
+        status: 404
+        file: null
+      - path: /.well-known/agent-card.json
+        status: 404
+        file: null
+      - path: /.well-known/agent.json
+        status: 404
+        file: null
+  - host: logs-prod-008.grafana.net
+    note: >-
+      A live Grafana Cloud Logs (hosted Loki) ingest/query host, named in the Loki logcli
+      documentation. It serves the Loki HTTP API and returns a real JSON authentication error
+      without credentials; every /.well-known/ path returns a plain-text 404.
+    documents:
+      - path: /.well-known/agent-card.json
+        status: 404
+        file: null
+      - path: /.well-known/agent.json
+        status: 404
+        file: null
+      - path: /.well-known/security.txt
+        status: 404
+        file: null
+summary:
+  hosts_probed: 3
+  documents_served: 3
+  security_txt: false
+  api_catalog: false
+  agent_card: false
+  oauth_metadata: true
+checked: '2026-08-27'

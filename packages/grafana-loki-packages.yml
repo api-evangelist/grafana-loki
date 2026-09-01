@@ -1,0 +1,170 @@
+generated: '2026-08-27'
+method: searched
+source: >-
+  proxy.golang.org, hub.docker.com, grafana.github.io/helm-charts/index.yaml, and
+  https://github.com/grafana/loki
+name: Grafana Loki packages and distributions
+description: >-
+  Grafana Loki is distributed as server software, not as a set of client SDKs. Every first-party
+  package below is either the Loki server, an operational component of it, or the Go module that
+  defines the push contract. Grafana Labs publishes NO first-party HTTP client library for Loki in
+  any language: the documented integration paths are the HTTP API directly, LogCLI, and a log
+  collection agent (Grafana Alloy). Registry currency is recorded per entry as structured
+  version/published fields read from each registry's metadata endpoint.
+first_party_client_sdks: 1
+first_party_client_sdk_languages: [go]
+first_party_client_sdk_note: >-
+  The only first-party client-side library is github.com/grafana/loki/pkg/push — the Go module that
+  defines and marshals the push contract, which is what a Go log producer imports to speak to Loki.
+  There is no first-party client SDK in any other language: Loki's documentation offers Python HTTP
+  examples ("Query Loki with Python") rather than a package, and every language-specific Loki client
+  on npm/PyPI (winston-loki, python-logging-loki, loki-logger) is community-maintained by an
+  individual, not by Grafana Labs, so none is credited here as official.
+packages:
+  - name: github.com/grafana/loki/v3
+    registry: go
+    registry_url: https://pkg.go.dev/github.com/grafana/loki/v3
+    metadata_endpoint: https://proxy.golang.org/github.com/grafana/loki/v3/@latest
+    official: true
+    kind: server + libraries
+    language: go
+    version: v3.7.6
+    published: '2026-08-05'
+    license: AGPL-3.0
+    description: The Loki server module — distributor, ingester, querier, ruler, compactor and the LogQL engine.
+  - name: github.com/grafana/loki/pkg/push
+    registry: go
+    registry_url: https://pkg.go.dev/github.com/grafana/loki/pkg/push
+    metadata_endpoint: https://proxy.golang.org/github.com/grafana/loki/pkg/push/@latest
+    official: true
+    kind: contract library
+    language: go
+    version: v0.0.0-20260827121917-dd170be07101
+    published: '2026-08-27'
+    license: Apache-2.0
+    description: >-
+      The push protocol module — the Go binding of grpc/grafana-loki-push.proto. Untagged; published
+      as a pseudo-version tracking main, which is why the version string carries a commit hash rather
+      than a semver tag. This is the module a Go producer imports to speak Loki's ingest contract.
+  - name: github.com/grafana/loki (v1)
+    registry: go
+    registry_url: https://pkg.go.dev/github.com/grafana/loki
+    metadata_endpoint: https://proxy.golang.org/github.com/grafana/loki/@latest
+    official: true
+    kind: legacy module path
+    language: go
+    version: v1.6.1
+    published: '2020-08-24'
+    license: Apache-2.0
+    description: >-
+      The pre-v2 module path. Frozen since 2020; superseded by github.com/grafana/loki/v3. Recorded
+      because a consumer resolving the unversioned path silently gets six-year-old code.
+  - name: grafana/loki
+    registry: docker
+    registry_url: https://hub.docker.com/r/grafana/loki
+    metadata_endpoint: https://hub.docker.com/v2/repositories/grafana/loki/tags
+    official: true
+    kind: container image
+    version: 3.7.6
+    published: '2026-08-06'
+    description: The Loki server image. Also publishes 3.6.15 on the maintenance line and rolling main-<sha> tags.
+  - name: grafana/logcli
+    registry: docker
+    registry_url: https://hub.docker.com/r/grafana/logcli
+    metadata_endpoint: https://hub.docker.com/v2/repositories/grafana/logcli/tags
+    official: true
+    kind: container image
+    version: 3.6.15
+    published: '2026-08-06'
+    description: LogCLI, the first-party Loki command-line client. See cli/grafana-loki-cli.yml.
+  - name: grafana/loki-canary
+    registry: docker
+    registry_url: https://hub.docker.com/r/grafana/loki-canary
+    official: true
+    kind: container image
+    version: 3.7.6
+    published: '2026-08-06'
+    description: Loki Canary, the first-party correctness/latency probe that writes and reads back known log lines.
+  - name: grafana/promtail
+    registry: docker
+    registry_url: https://hub.docker.com/r/grafana/promtail
+    official: true
+    kind: container image
+    version: 3.6.11
+    published: '2026-05-13'
+    deprecated: true
+    description: >-
+      Promtail, Loki's original log collection agent, superseded by Grafana Alloy. Three months
+      behind the Loki server image — the decay is the deprecation showing up in the registry data.
+  - name: grafana/loki-docker-driver
+    registry: docker
+    registry_url: https://hub.docker.com/r/grafana/loki-docker-driver
+    official: true
+    kind: docker plugin
+    version: 3.1.2
+    published: '2024-10-18'
+    description: >-
+      Docker logging driver plugin that ships container logs straight to Loki. Last semver release
+      2024-10-18 — nearly two years behind the server it writes to.
+  - name: loki
+    registry: helm
+    registry_url: https://grafana.github.io/helm-charts
+    metadata_endpoint: https://grafana.github.io/helm-charts/index.yaml
+    official: true
+    kind: helm chart
+    version: 7.3.0
+    published: '2026-08-10'
+    app_version: 3.6.12
+    description: The supported Loki Helm chart (simple scalable / distributed / single binary modes).
+  - name: loki-distributed
+    registry: helm
+    registry_url: https://grafana.github.io/helm-charts
+    official: true
+    kind: helm chart
+    version: 0.80.6
+    published: '2025-10-31'
+    app_version: 2.9.13
+    deprecated: true
+    description: Superseded by the loki chart. Pinned to a Loki 2.9 app version, two majors behind.
+  - name: loki-stack
+    registry: helm
+    registry_url: https://grafana.github.io/helm-charts
+    official: true
+    kind: helm chart
+    version: 2.10.3
+    published: '2025-10-31'
+    app_version: v2.9.3
+    deprecated: true
+    description: Superseded by the loki chart plus Grafana Alloy.
+  - name: promtail
+    registry: helm
+    registry_url: https://grafana.github.io/helm-charts
+    official: true
+    kind: helm chart
+    version: 6.17.1
+    published: '2025-10-31'
+    app_version: 3.5.1
+    deprecated: true
+    description: Superseded by the Grafana Alloy chart.
+  - name: github.com/grafana/mcp-grafana
+    registry: go
+    registry_url: https://github.com/grafana/mcp-grafana
+    official: true
+    kind: mcp server
+    language: go
+    version: v1.2.0
+    published: '2026-08-25'
+    license: Apache-2.0
+    description: >-
+      The Grafana MCP server, which registers the Loki tool family. Installed with
+      `go install github.com/grafana/mcp-grafana/cmd/mcp-grafana@latest` or the grafana/mcp-grafana
+      container image. See mcp/grafana-loki-mcp.yml.
+package_count: 13
+official_count: 13
+currency_finding: >-
+  The Loki server, LogCLI, Loki Canary and the supported Helm chart are all current (August 2026).
+  The decay is concentrated exactly where Grafana Labs has publicly deprecated something: Promtail
+  (May 2026), the loki-distributed / loki-stack / promtail Helm charts (October 2025, pinned to Loki
+  2.9), and the Docker logging driver plugin (October 2024). That pattern is a deprecation signal
+  rather than an abandonment signal, and it lines up with lifecycle/grafana-loki-lifecycle.yml.
+checked: '2026-08-27'

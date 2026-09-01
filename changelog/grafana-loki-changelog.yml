@@ -1,0 +1,92 @@
+generated: '2026-08-27'
+method: searched
+source: https://github.com/grafana/loki/releases
+name: Grafana Loki changelog
+description: >-
+  Grafana Loki publishes a dated, per-release changelog in three places: CHANGELOG.md in the
+  repository, the GitHub Releases feed, and the versioned release-notes section of the documentation.
+  Breaking changes and required migration steps are carried separately in the upgrade guide.
+scheme: semver
+current_version: v3.7.6
+current_version_date: '2026-08-06'
+release_lines:
+  - {line: '3.7.x', status: current, latest: v3.7.6, latest_date: '2026-08-06'}
+  - {line: '3.6.x', status: maintenance, latest: v3.6.15, latest_date: '2026-08-06'}
+  - {line: 'operator', status: current, latest: operator/v0.11.0, latest_date: '2026-08-18', note: 'Loki Kubernetes Operator, versioned independently.'}
+sources:
+  changelog_file: https://github.com/grafana/loki/blob/main/CHANGELOG.md
+  releases: https://github.com/grafana/loki/releases
+  release_notes: https://grafana.com/docs/loki/latest/release-notes/
+  upgrade_guide: https://grafana.com/docs/loki/latest/setup/upgrade/
+  helm_chart_index: https://grafana.github.io/helm-charts/index.yaml
+conventions:
+  commit_style: 'Conventional Commits — <type>(<scope>): Description (uppercase after the colon).'
+  automation: 'release-please drives the minor/patch release PRs (.release-please-manifest.json, .github/workflows/*release*).'
+  breaking_changes: 'Enumerated in the per-version upgrade guide rather than inline in the changelog.'
+entries:
+  - version: operator/v0.11.0
+    date: '2026-08-18'
+    breaking: unknown
+    component: Loki Kubernetes Operator
+  - version: v3.7.6
+    date: '2026-08-06'
+    breaking: false
+    component: Loki
+    line: '3.7.x'
+  - version: v3.6.15
+    date: '2026-08-06'
+    breaking: false
+    component: Loki
+    line: '3.6.x'
+  - version: v3.7.5
+    date: '2026-08-05'
+    breaking: false
+    component: Loki
+    line: '3.7.x'
+  - version: v3.6.14
+    date: '2026-08-05'
+    breaking: false
+    component: Loki
+    line: '3.6.x'
+  - version: v3.7.4
+    date: '2026-07-24'
+    breaking: false
+    component: Loki
+    line: '3.7.x'
+  - version: v3.6.13
+    date: '2026-07-24'
+    breaking: false
+    component: Loki
+    line: '3.6.x'
+  - version: v3.7.3
+    date: '2026-06-24'
+    breaking: false
+    component: Loki
+    line: '3.7.x'
+  - version: v3.6.12
+    date: '2026-06-24'
+    breaking: false
+    component: Loki
+    line: '3.6.x'
+  - version: operator/v0.10.2
+    date: '2026-06-09'
+    breaking: unknown
+    component: Loki Kubernetes Operator
+  - version: v3.7.2
+    date: '2026-05-13'
+    breaking: false
+    component: Loki
+    line: '3.7.x'
+  - version: v3.6.11
+    date: '2026-05-13'
+    breaking: false
+    component: Loki
+    line: '3.6.x'
+entry_count: 12
+window: '2026-05-13 to 2026-08-18'
+note: >-
+  Two active release lines are maintained in parallel and released on the same day — 3.7.x current
+  and 3.6.x maintenance — which is a real backport discipline, not a versioning accident. Breaking
+  flags are recorded as false where the release is a patch on an established line and unknown for the
+  independently versioned operator, rather than asserted from the tag alone.
+checked: '2026-08-27'

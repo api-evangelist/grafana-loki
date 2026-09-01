@@ -1,0 +1,191 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+name: Grafana Loki API conventions
+description: >-
+  Cross-cutting runtime semantics for the Grafana Loki HTTP API: how requests are authenticated and
+  scoped to a tenant, how queries are bounded and paged through time, how errors and rate limits are
+  signalled, how versions are addressed, and — critically for agents — what can and cannot be taken
+  back after it is written.
+auth_style:
+  summary: >-
+    No native authentication. Tenancy via the X-Scope-OrgID header; credentials supplied by a
+    fronting proxy, or HTTP Basic with an access policy token on Grafana Cloud Logs / Grafana
+    Enterprise Logs.
+  see: authentication/grafana-loki-authentication.yml
+versioning:
+  style: path
+  current: v1
+  pattern: '/loki/api/v1/...'
+  additional_prefixes:
+    - {prefix: '/otlp/v1/logs', note: 'OTLP/HTTP logs ingest'}
+    - {prefix: '/prometheus/api/v1/', note: 'Prometheus-compatible ruler read API'}
+    - {prefix: '/api/prom/', note: 'Prometheus-compatible ruler API; the /api/prom query and push variants are deprecated'}
+  software_versioning: 'Semantic versioning on the Loki release (current v3.7.6, 2026-08-06).'
+  version_discovery: 'GET /loki/api/v1/status/buildinfo returns build information for the running instance.'
+  see: lifecycle/grafana-loki-lifecycle.yml
+idempotency:
+  supported: false
+  idempotency_key_header: null
+  detail: >-
+    Loki publishes no Idempotency-Key header and no request-deduplication contract. What it does
+    guarantee is entry-level de-duplication in the write path: pushing the exact same log line with
+    the exact same timestamp to the exact same stream is absorbed rather than duplicated, because a
+    stream is keyed on its label set and entries are ordered by timestamp. That makes a retried push
+    of an identical payload safe in practice, but it is a storage property, not a documented
+    idempotency guarantee, and it does NOT hold when the line content or timestamp differs by even
+    one nanosecond.
+    Rate-limit rejections (429) are explicitly documented as retryable and discard nothing, so
+    resending the same batch after a 429 is the intended behaviour. Validation rejections (400) are
+    documented as not retryable — the sample is discarded and an identical retry fails identically.
+  retry_guidance:
+    - {status: 429, retryable: true, action: 'Back off and resend the same batch.'}
+    - {status: 400, retryable: false, action: 'Do not retry unchanged; fix the payload per the reason code.'}
+    - {status: 413, retryable: false, action: 'Split the batch into smaller requests.'}
+  see: errors/grafana-loki-problem-types.yml
+pagination:
+  style: time-window
+  detail: >-
+    Loki does not page with cursors or offsets. A result set is bounded by a time range plus a limit,
+    and a client walks a large range by moving the window. logcli implements exactly this as
+    "batching": it repeatedly queries with a smaller limit and advances the start/end boundary.
+  params:
+    - {name: start, description: 'Start of the query window. Nanosecond Unix epoch or RFC3339Nano.'}
+    - {name: end, description: 'End of the query window. Nanosecond Unix epoch or RFC3339Nano.'}
+    - {name: since, description: 'Duration used to compute start relative to end. start supersedes it.'}
+    - {name: limit, description: 'Maximum entries returned. Capped by max_entries_limit_per_query (default 5000).'}
+    - {name: direction, description: 'forward or backward. Defaults to backward (newest first).'}
+    - {name: step, description: 'Query resolution for metric queries on query_range.'}
+    - {name: interval, description: 'Return one entry per interval on log queries. Does not fill gaps.'}
+  response_fields: [status, data.resultType, data.result, data.stats]
+  batching_note: >-
+    logcli --batch walks the window automatically; --parallel-duration, --parallel-max-workers and
+    --merge-parts split a long range across workers.
+field_expansion:
+  supported: false
+  note: >-
+    Loki has no sparse-fieldset or expansion parameter. Shaping is done inside LogQL itself — label
+    matchers, line filters, `| json`, `| logfmt`, `| line_format` and `| label_format` decide what
+    comes back.
+metadata:
+  supported: true
+  mechanism: structured metadata
+  detail: >-
+    Arbitrary key/value metadata may be attached per log line, separate from the stream labels, and
+    is queryable without becoming part of the stream cardinality. Bounded by
+    max_structured_metadata_size (64KB) and max_structured_metadata_entries_count (128) per line.
+  docs: https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/
+request_tracing:
+  request_id_header: null
+  tracing_header: X-Query-Tags
+  detail: >-
+    Loki has no request-id echo header. It does accept X-Query-Tags, an arbitrary tag string that is
+    carried into the query's metrics.go statistics line so a specific query can be traced through the
+    server logs afterwards. logcli exposes it as --query-tags / LOKI_QUERY_TAGS.
+  cache_control: 'Cache-Control: no-cache is honoured on queries (logcli --nocache).'
+  statistics: >-
+    Every query response carries a data.stats block with ingester, querier, cache and summary
+    counters (bytes processed, lines processed, execution time), so cost is observable per call.
+error_envelope:
+  query_surface:
+    content_type: application/json
+    shape: '{"status":"error","error":"<message>"}'
+    observed:
+      url: 'https://logs-prod-008.grafana.net/loki/api/v1/labels'
+      status: 401
+      body: '{"status":"error","error":"authentication error: no credentials provided"}'
+  push_surface:
+    content_type: text/plain
+    shape: 'Plain-text message naming the reason, the offending stream and the exceeded limit.'
+  rfc9457: false
+  see: errors/grafana-loki-problem-types.yml
+rate_limit_signaling:
+  headers_published: false
+  status: 429
+  retry_after: false
+  runtime_signal: >-
+    Prometheus counters loki_discarded_samples_total and loki_discarded_bytes_total, labelled with
+    the discard `reason`, exposed on GET /metrics.
+  see: rate-limits/grafana-loki-rate-limits.yml
+content_types:
+  request: [application/json, application/x-protobuf, application/x-protobuf snappy-compressed]
+  response: [application/json]
+  streaming: 'GET /loki/api/v1/tail upgrades to a WebSocket.'
+  otlp: 'POST /otlp/v1/logs accepts OTLP/HTTP (protobuf and JSON encodings).'
+dry_run_mode:
+  supported: partial
+  detail: >-
+    There is no dry-run flag on the write path. There is a genuine rehearsal surface on the read
+    path: GET /loki/api/v1/format_query validates and pretty-prints a LogQL query without executing
+    it, and GET /loki/api/v1/index/stats returns the byte/chunk/stream estimate for a selector before
+    a query is run — which is exactly what the grafana/mcp-grafana Loki guardrail uses to refuse a
+    query that would scan more than its byte budget. An agent should call index/stats before an
+    expensive query.
+  operations: ['GET /loki/api/v1/format_query', 'GET /loki/api/v1/index/stats']
+reversibility:
+  applicable: true
+  grade: verified
+  summary: >-
+    Loki has two write surfaces with different reversibility stories. Log ingestion is NOT
+    reversible as an operation — there is no un-push — but data does expire on a configured
+    retention window. Log DELETION is reversible, with an explicitly stated window.
+  surfaces:
+    - surface: Log ingestion
+      write_operations: ['POST /loki/api/v1/push', 'POST /otlp/v1/logs']
+      reversal_operation: null
+      reversal_available: false
+      window: null
+      note: >-
+        There is no operation that un-pushes a log line. The only way to remove ingested data is the
+        deletion API below, which requires deletion_mode to be filter-and-delete or filter-only, or
+        to wait for the configured retention_period to expire the chunk.
+      docs: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+    - surface: Log deletion
+      write_operations: ['POST /loki/api/v1/delete']
+      reversal_operation: 'DELETE /loki/api/v1/delete'
+      reversal_available: true
+      window: >-
+        Cancellable until the request is picked up for processing. The grace period is
+        delete_request_cancel_period, default 24h. Passing force=true additionally cancels a
+        partially completed delete request.
+      window_config: delete_request_cancel_period
+      window_default: 24h
+      parameters: [request_id, force]
+      quote: >-
+        "Loki allows cancellation of delete requests until the requests are picked up for processing.
+        It is controlled by the `delete_request_cancel_period` YAML configuration or the equivalent
+        command line option when invoking Loki. To cancel a delete request that has been picked up
+        for processing or is partially complete, pass the `force=true` query parameter to the API."
+      docs: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+    - surface: Ruler rule groups
+      write_operations: ['POST /loki/api/v1/rules/{namespace}']
+      reversal_operation: 'POST /loki/api/v1/rules/{namespace}'
+      reversal_available: true
+      window: >-
+        Unbounded — a rule group is declarative and set-based, so re-POSTing the previous YAML
+        restores the prior state. DELETE /loki/api/v1/rules/{namespace}/{groupName} has no undo; the
+        group must be re-created from a copy the caller kept.
+      docs: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+    - surface: Ingester shutdown
+      write_operations: ['POST /ingester/prepare_shutdown', 'POST /ingester/shutdown']
+      reversal_operation: 'DELETE /ingester/prepare_shutdown'
+      reversal_available: partial
+      window: >-
+        prepare_shutdown can be undone with a DELETE before the process receives SIGTERM/SIGINT.
+        /ingester/shutdown itself is terminal.
+      docs: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  agent_guidance: >-
+    Before calling POST /loki/api/v1/delete, record the returned request_id. It is the only handle
+    that lets DELETE /loki/api/v1/delete cancel the request, and the default cancel window is 24
+    hours from submission — after which the deletion is permanent.
+cross_links:
+  errors: errors/grafana-loki-problem-types.yml
+  lifecycle: lifecycle/grafana-loki-lifecycle.yml
+  authentication: authentication/grafana-loki-authentication.yml
+  rate_limits: rate-limits/grafana-loki-rate-limits.yml
+  scopes: scopes/grafana-loki-scopes.yml
+docs:
+  - https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  - https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/
+  - https://grafana.com/docs/loki/latest/configure/
+checked: '2026-08-27'

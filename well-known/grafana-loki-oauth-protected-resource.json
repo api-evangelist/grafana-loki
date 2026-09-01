@@ -1,0 +1,1 @@
+{"resource":"https://mcp.grafana.com/mcp","authorization_servers":["https://mcp.grafana.com/mcp"],"scopes_supported":["grafana:read","grafana:query","grafana:write"]}

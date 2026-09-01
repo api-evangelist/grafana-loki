@@ -1,0 +1,240 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/
+name: Grafana Loki error and discard-reason catalog
+description: >-
+  Grafana Loki's push path rejects requests with a machine-readable `reason` label rather than an
+  RFC 9457 problem document. Every reason below is published in the Loki request-validation and
+  rate-limit reference with its enforcing component, HTTP status, retryability, whether the sample
+  is discarded, and the configuration option that governs it. The same reasons appear as the
+  `reason` label on the `loki_discarded_samples_total` and `loki_discarded_bytes_total` metrics,
+  which is how an operator observes them without reading response bodies.
+format: plain-text
+problem_json: false
+rfc9457: false
+envelope:
+  content_type: text/plain
+  shape: >-
+    Loki returns a plain-text error body on the push path, typically naming the reason, the offending
+    stream, and the limit that was exceeded. Query endpoints return JSON with an `error` message.
+  metric_labels: [reason, tenant]
+  metrics: [loki_discarded_samples_total, loki_discarded_bytes_total]
+classes:
+  - class: rate-limit
+    http_status: 429
+    retryable: true
+    sample_discarded: false
+    note: The whole request is rejected before storage; the client may resend after the limit clears.
+  - class: validation
+    http_status: 400
+    retryable: false
+    sample_discarded: true
+    note: The sample is dropped permanently. Retrying the same payload will fail identically.
+  - class: payload-size
+    http_status: 413
+    retryable: false
+    sample_discarded: true
+problem_types:
+  - reason: rate_limited
+    class: rate-limit
+    http_status: 429
+    enforced_by: distributor
+    retryable: true
+    sample_discarded: false
+    per_tenant_configurable: true
+    config: [ingestion_rate_mb, ingestion_burst_size_mb]
+    title: Tenant ingestion rate limit exceeded
+    remediation: Reduce ingest volume, back off and retry, or raise ingestion_rate_mb / ingestion_burst_size_mb for the tenant.
+  - reason: per_stream_rate_limit
+    class: rate-limit
+    http_status: 429
+    enforced_by: ingester
+    retryable: true
+    sample_discarded: false
+    per_tenant_configurable: true
+    config: [per_stream_rate_limit, per_stream_rate_limit_burst]
+    title: A single stream exceeded its rate limit
+    remediation: Split the stream with an additional label, or raise per_stream_rate_limit for the tenant.
+  - reason: stream_limit
+    class: rate-limit
+    http_status: 429
+    enforced_by: ingester
+    retryable: true
+    sample_discarded: false
+    per_tenant_configurable: true
+    config: [max_global_streams_per_user]
+    title: Tenant reached its maximum number of active streams
+    remediation: Reduce label cardinality, or raise max_global_streams_per_user.
+  - reason: line_too_long
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_line_size]
+    title: Log line exceeds the maximum allowable length in bytes
+    remediation: Truncate the line before sending, or raise max_line_size. The response names the offending stream and its size.
+  - reason: invalid_labels
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: false
+    config: []
+    title: One or more labels failed validation
+    remediation: Correct the label names/values to valid Prometheus label syntax.
+  - reason: missing_labels
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: false
+    config: []
+    title: Stream submitted with no labels
+    remediation: Attach at least one label to every stream.
+  - reason: too_far_behind
+    aliases: [out_of_order]
+    class: validation
+    http_status: 400
+    enforced_by: ingester
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [unordered_writes, max_chunk_age]
+    title: Entry timestamp is too far behind the accepted window
+    remediation: >-
+      Clusters with unordered_writes=true (the default since Loki v2.4) report too_far_behind;
+      clusters with unordered_writes=false report out_of_order. Send entries within max_chunk_age
+      of the stream head.
+  - reason: greater_than_max_sample_age
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [reject_old_samples, reject_old_samples_max_age]
+    title: Sample is older than the configured maximum sample age
+    remediation: Send fresher data, or raise reject_old_samples_max_age (default 1w). reject_old_samples defaults to true.
+  - reason: too_far_in_future
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [creation_grace_period]
+    title: Sample timestamp is beyond the future grace period
+    remediation: Fix clock skew on the sending host, or raise creation_grace_period (default 10m).
+  - reason: max_label_names_per_series
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_label_names_per_series]
+    title: Too many labels on a single stream
+    remediation: Reduce the label set (default cap 15), or move detail into structured metadata.
+  - reason: label_name_too_long
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_label_name_length]
+    title: Label name exceeds the maximum length in bytes
+    remediation: Shorten the label name (default cap 1024 bytes).
+  - reason: label_value_too_long
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_label_value_length]
+    title: Label value exceeds the maximum length in bytes
+    remediation: Shorten the label value (default cap 2048 bytes).
+  - reason: duplicate_label_names
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: false
+    config: []
+    title: Two or more identical labels on a sample
+    remediation: De-duplicate the label set before sending.
+  - reason: request_body_too_large
+    class: payload-size
+    http_status: 413
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: false
+    config: [max_recv_msg_size]
+    title: Raw push request exceeds the maximum receivable message size
+    remediation: >-
+      Batch fewer entries per request. Unlike the other validation errors this is raised before Loki
+      can parse individual streams, so no stream detail is returned.
+  - reason: disallowed_structured_metadata
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [allow_structured_metadata]
+    title: Tenant is not permitted to send structured metadata
+    remediation: Strip structured metadata, or enable allow_structured_metadata for the tenant.
+  - reason: structured_metadata_too_large
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_structured_metadata_size]
+    title: Structured metadata on one log line exceeds the maximum size
+    remediation: Reduce metadata payload (default cap 64KB), or raise max_structured_metadata_size.
+  - reason: structured_metadata_too_many
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [max_structured_metadata_entries_count]
+    title: Too many structured metadata entries on one log line
+    remediation: Reduce the number of entries (default cap 128), or raise max_structured_metadata_entries_count.
+  - reason: blocked_ingestion
+    aliases: [blocked_ingestion_policy]
+    class: validation
+    http_status: null
+    http_status_note: Configurable via block_ingestion_status_code.
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [block_ingestion_until, block_ingestion_status_code]
+    title: Ingestion is administratively blocked for this tenant or policy
+    remediation: Contact the Loki operator; blocking is time-bounded by block_ingestion_until.
+  - reason: missing_enforced_labels
+    class: validation
+    http_status: 400
+    enforced_by: distributor
+    retryable: false
+    sample_discarded: true
+    per_tenant_configurable: true
+    config: [enforced_labels]
+    title: A stream is missing a label the tenant is required to send
+    remediation: Add every label listed in the tenant's enforced_labels configuration.
+problem_type_count: 19
+docs:
+  - https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/
+  - https://grafana.com/docs/loki/latest/reference/loki-http-api/
+checked: '2026-08-27'

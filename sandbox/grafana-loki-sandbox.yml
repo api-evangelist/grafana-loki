@@ -1,0 +1,81 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/get-started/quick-start/quick-start/
+name: Grafana Loki sandbox and test environments
+description: >-
+  Grafana Loki has no test-mode key prefix and no fixture tokens, because it has no credentials at
+  all (see authentication/grafana-loki-authentication.yml). What it publishes instead is four ways to
+  get a real Loki you can call without buying anything: a browser-hosted interactive sandbox, a
+  public read-only Grafana with live Loki data, a documented local docker-compose stack with a log
+  generator attached, and a CLI mode that evaluates LogQL against a local file with no server at all.
+test_mode_keys: false
+test_credentials: false
+test_credentials_note: >-
+  There are no test cards, magic identifiers, or sandbox tokens to record. Loki ships no
+  authentication, so a local instance accepts any tenant ID you name in X-Scope-OrgID.
+environments:
+  - name: Loki Quickstart Sandbox
+    kind: hosted-interactive
+    url: https://killercoda.com/grafana-labs/course/loki/loki-quickstart
+    http_status: 200
+    provider: Grafana Labs (published on Killercoda)
+    credentials_required: false
+    description: >-
+      A browser-hosted interactive learning environment running the Loki quickstart stack. Cited from
+      the Loki quick-start documentation as the alternative to running docker-compose locally.
+    feedback: https://github.com/grafana/killercoda
+  - name: Grafana Play
+    kind: hosted-readonly
+    url: https://play.grafana.org/
+    explore_logs_url: https://play.grafana.org/a/grafana-lokiexplore-app
+    http_status: 200
+    provider: Grafana Labs
+    credentials_required: false
+    description: >-
+      Grafana Labs' public demo Grafana, with live Loki data behind the Logs Drilldown app. Read-only
+      and anonymous — a way to see real LogQL against real data without an account.
+  - name: Local docker-compose quickstart
+    kind: local
+    url: https://grafana.com/docs/loki/latest/get-started/quick-start/quick-start/
+    credentials_required: false
+    description: >-
+      A three-target Loki (read/write/backend) plus Grafana Alloy, Grafana, MinIO and flog — a log
+      generator — so the stack produces its own traffic with no data of yours.
+    assets:
+      - https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/loki-config.yaml
+      - https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/alloy-local-config.yaml
+      - https://raw.githubusercontent.com/grafana/loki/main/examples/getting-started/docker-compose.yaml
+    start: 'docker compose up -d'
+    endpoints:
+      - {url: 'http://localhost:3100', role: 'Loki gateway'}
+      - {url: 'http://localhost:3101/ready', role: 'read component readiness'}
+      - {url: 'http://localhost:3102/ready', role: 'write component readiness'}
+      - {url: 'http://localhost:3000', role: 'Grafana'}
+      - {url: 'http://localhost:12345', role: 'Grafana Alloy UI'}
+    log_generator: 'flog (https://github.com/mingrammer/flog)'
+  - name: 'logcli --stdin'
+    kind: offline
+    url: https://grafana.com/docs/loki/latest/query/logcli/getting-started/
+    credentials_required: false
+    description: >-
+      Runs a LogQL expression against stdin with no Loki server involved. The cheapest possible way
+      to rehearse a query before pointing it at production data.
+  - name: Introduction to Metrics, Logs, Traces and Profiling in Grafana
+    kind: local
+    url: https://github.com/grafana/intro-to-mlt
+    credentials_required: false
+    description: 'Self-contained demo environment bundling Mimir, Loki, Tempo and Grafana.'
+  - name: Grafana Cloud Logs free tier
+    kind: hosted-account
+    url: https://grafana.com/pricing/
+    credentials_required: true
+    card_required: false
+    description: >-
+      50 GB ingested per month with 14 day retention, permanently free, no credit card. A real hosted
+      Loki endpoint rather than a simulation. See plans/grafana-loki-plans-pricing.yml.
+environment_count: 6
+time_simulation: false
+fixture_tooling:
+  - {name: flog, url: 'https://github.com/mingrammer/flog', description: 'Log generator producing common log formats; wired into the quickstart compose file.'}
+  - {name: Loki Canary, image: 'grafana/loki-canary', description: 'First-party probe that writes known log lines and reads them back to verify correctness and measure latency.'}
+checked: '2026-08-27'

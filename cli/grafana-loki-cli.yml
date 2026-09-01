@@ -1,0 +1,103 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/query/logcli/getting-started/
+name: LogCLI
+description: >-
+  LogCLI is Grafana Loki's first-party command-line client. It runs LogQL queries against any Loki
+  instance over the same HTTP API an application would use, and additionally manages log deletion
+  requests. It ships from the Loki repository (cmd/logcli) and is released alongside Loki itself.
+binary: logcli
+first_party: true
+repository: https://github.com/grafana/loki/tree/main/cmd/logcli
+docs: https://grafana.com/docs/loki/latest/query/logcli/getting-started/
+version_policy: >-
+  "As a best practice, you should download the version of logcli that matches your Loki version. And
+  upgrade your logcli when you upgrade your version of Loki."
+install:
+  - method: binary
+    recommended: true
+    source: https://github.com/grafana/loki/releases
+    platforms: [linux, darwin, windows]
+    note: Download the logcli binary from the Loki releases page.
+  - method: source
+    commands:
+      - 'git clone https://github.com/grafana/loki.git'
+      - 'cd loki'
+      - 'make logcli'
+      - 'cp cmd/logcli/logcli /usr/local/bin/logcli'
+  - method: docker
+    image: 'grafana/logcli'
+    registry: docker.io
+    version: 3.6.15
+    published: '2026-08-06'
+configuration:
+  address:
+    flag: --addr
+    env: LOKI_ADDR
+    default: 'http://localhost:3100'
+  tenant:
+    flag: --org-id
+    env: LOKI_ORG_ID
+    note: Sets the X-Scope-OrgID header.
+  auth:
+    - {flag: '--username', env: LOKI_USERNAME}
+    - {flag: '--password', env: LOKI_PASSWORD}
+    - {flag: '--bearer-token', env: LOKI_BEARER_TOKEN}
+    - {flag: '--bearer-token-file', env: LOKI_BEARER_TOKEN_FILE}
+    - {flag: '--cert', env: LOKI_CLIENT_CERT_PATH}
+    - {flag: '--key', env: LOKI_CLIENT_KEY_PATH}
+    - {flag: '--ca-cert', env: LOKI_CA_CERT_PATH}
+    - {flag: '--tls-skip-verify', env: LOKI_TLS_SKIP_VERIFY}
+  tracing:
+    - {flag: '--query-tags', env: LOKI_QUERY_TAGS, note: 'Sets the X-Query-Tags header, carried into metrics.go statistics.'}
+    - {flag: '--nocache', env: LOKI_NO_CACHE, note: 'Sends Cache-Control: no-cache.'}
+  output:
+    - {flag: '-o, --output', values: [default, raw, jsonl], default: default}
+    - {flag: '-z, --timezone', values: [Local, UTC], default: Local}
+    - {flag: '--output-timestamp-format', values: [rfc3339, rfc3339nano, rfc822z, rfc1123z, stampmicro, stampmilli, stampnano, unixdate], default: rfc3339}
+    - {flag: '-q, --quiet'}
+    - {flag: '--stats'}
+  config_file: logcli-config.yaml
+commands:
+  - group: query
+    commands:
+      - {name: query, description: 'Run a LogQL query over a time range. Default window is the last hour; 30 entries unless --limit is raised.', backing_api: 'GET /loki/api/v1/query_range'}
+      - {name: instant-query, description: 'Run a LogQL metric query at a single point in time.', backing_api: 'GET /loki/api/v1/query'}
+      - {name: labels, description: 'List label names, or values for a named label.', backing_api: 'GET /loki/api/v1/labels'}
+      - {name: series, description: 'List streams matching a set of matchers.', backing_api: 'GET /loki/api/v1/series'}
+      - {name: stats, description: 'Show index statistics for a selector.', backing_api: 'GET /loki/api/v1/index/stats'}
+      - {name: volume, description: 'Show log volume for a selector.', backing_api: 'GET /loki/api/v1/index/volume'}
+      - {name: volume_range, description: 'Show log volume over a range for a selector.', backing_api: 'GET /loki/api/v1/index/volume_range'}
+      - {name: detected-fields, description: 'List fields detected inside log lines.', backing_api: 'GET /loki/api/v1/detected_fields'}
+  - group: delete
+    commands:
+      - {name: delete, description: 'Parent command for log deletion request management.', backing_api: '/loki/api/v1/delete'}
+      - {name: delete create, description: 'Submit a log deletion request.', backing_api: 'POST /loki/api/v1/delete'}
+      - {name: delete list, description: 'List deletion requests.', backing_api: 'GET /loki/api/v1/delete'}
+      - {name: delete cancel, description: 'Cancel a deletion request within the cancel window.', backing_api: 'DELETE /loki/api/v1/delete'}
+  - group: help
+    commands:
+      - {name: help, description: 'Show context-sensitive help.'}
+command_count: 13
+key_flows:
+  - name: Query a local Loki
+    steps:
+      - 'export LOKI_ADDR=http://localhost:3100'
+      - "logcli query '{service_name=\"website\"}'"
+  - name: Query Grafana Cloud Logs
+    steps:
+      - 'export LOKI_ADDR=https://logs-us-west1.grafana.net'
+      - 'export LOKI_USERNAME=<tenant>'
+      - 'export LOKI_PASSWORD=<access policy token>'
+      - "logcli query '{service_name=\"website\"}'"
+  - name: Download a large range in parallel
+    flags: [--parallel-duration, --parallel-max-workers, --part-path-prefix, --merge-parts, --keep-parts, --overwrite-completed-parts]
+    note: 'Splits a long window across workers and merges the parts; the documented way to export an unbounded number of lines.'
+  - name: Query a local log file without a server
+    flags: [--stdin]
+    note: 'Runs LogQL against stdin, so a LogQL expression can be rehearsed with no Loki instance at all.'
+features:
+  batching: true
+  shell_completion: true
+  stdin_mode: true
+checked: '2026-08-27'

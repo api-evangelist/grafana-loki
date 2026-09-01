@@ -1,0 +1,100 @@
+generated: '2026-08-27'
+method: searched
+source: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+name: Grafana Loki lifecycle, versioning and deprecation
+description: >-
+  How Grafana Loki versions its software and its API, what it has deprecated and what replaced it,
+  where release notes and upgrade guidance live, and where the hosted service publishes its status
+  and SLA.
+versioning:
+  api_style: path
+  api_current: v1
+  api_prefix: '/loki/api/v1'
+  software_scheme: semver
+  current_release: v3.7.6
+  released: '2026-08-06'
+  release_source: https://github.com/grafana/loki/releases
+  buildinfo_endpoint: 'GET /loki/api/v1/status/buildinfo'
+  note: >-
+    The HTTP API has stayed on v1 across Loki 2.x and 3.x. Breaking changes are managed through the
+    release-by-release upgrade guide rather than through a new API version prefix, which is why the
+    upgrade guide matters more than the version number for this API.
+deprecation_policy:
+  published: true
+  url: https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  sunset_header: false
+  deprecation_header: false
+  rfc8594: false
+  statement: >-
+    "The following endpoints are deprecated. While they still exist and work, they should not be used
+    for new deployments. Existing deployments should upgrade to use the supported endpoints."
+  mechanism: >-
+    Loki publishes a deprecated-endpoint table in the HTTP API reference, each row naming its
+    replacement, and a per-release upgrade guide that enumerates breaking changes, removed
+    configuration and required migration steps. It does NOT emit RFC 8594 Deprecation or Sunset
+    response headers, so deprecation is discoverable from documentation only, not at runtime.
+  upgrade_guide: https://grafana.com/docs/loki/latest/setup/upgrade/
+deprecated_operations:
+  - operation: 'POST /api/prom/push'
+    replacement: 'POST /loki/api/v1/push'
+  - operation: 'GET /api/prom/tail'
+    replacement: 'GET /loki/api/v1/tail'
+  - operation: 'GET /api/prom/query'
+    replacement: 'GET /loki/api/v1/query'
+  - operation: 'GET /api/prom/label'
+    replacement: 'GET /loki/api/v1/labels'
+  - operation: 'GET /api/prom/label/<name>/values'
+    replacement: 'GET /loki/api/v1/label/<name>/values'
+  - operation: 'GET /api/prom/series'
+    replacement: 'GET /loki/api/v1/series'
+  - operation: 'GET /ingester/flush_shutdown'
+    replacement: 'POST /ingester/shutdown'
+    note: >-
+      Named in the HTTP API reference as the deprecated handler that /ingester/shutdown supersedes.
+deprecated_operation_count: 7
+deprecated_components:
+  - name: Promtail
+    replacement: Grafana Alloy
+    note: >-
+      Promtail, Loki's original log collection agent, is superseded by Grafana Alloy. The promtail
+      Helm chart has not been released since 2025-10-31 (chart 6.17.1, appVersion 3.5.1) while the
+      loki chart is on 7.3.0 (2026-08-10).
+  - name: loki-distributed Helm chart
+    replacement: loki Helm chart
+    note: 'Last released 2025-10-31 at chart 0.80.6, appVersion 2.9.13.'
+  - name: loki-stack Helm chart
+    replacement: loki Helm chart + Grafana Alloy
+    note: 'Last released 2025-10-31 at chart 2.10.3, appVersion v2.9.3.'
+release_notes:
+  url: https://grafana.com/docs/loki/latest/release-notes/
+  changelog: https://github.com/grafana/loki/blob/main/CHANGELOG.md
+  releases: https://github.com/grafana/loki/releases
+  cadence: 'Minor and patch releases from a release-please driven pipeline; see changelog/grafana-loki-changelog.yml.'
+status_page:
+  published: true
+  url: https://status.grafana.com/
+  scope: >-
+    Grafana Cloud status, which covers Grafana Cloud Logs — the hosted Loki service. Self-hosted Loki
+    has no status page by nature.
+  http_status: 200
+sla:
+  published: true
+  url: https://grafana.com/legal/grafana-cloud-sla/
+  scope: Grafana Cloud (including Grafana Cloud Logs)
+  note: 'A separate Grafana Labs Enterprise Support SLA covers Grafana Enterprise Logs.'
+support_lifecycle:
+  note: >-
+    Loki follows the release lines of the grafana/loki repository. There is no separately published
+    end-of-life calendar for API versions; the upgrade guide is the authoritative migration surface.
+  improvement_process:
+    name: Loki Improvement Documents (LIDs)
+    url: https://grafana.com/docs/loki/latest/community/lids/
+    note: >-
+      The public design-proposal process for large functionality changes. It is the closest thing
+      Loki publishes to a forward-looking roadmap; there is no dated public roadmap page.
+docs:
+  - https://grafana.com/docs/loki/latest/reference/loki-http-api/
+  - https://grafana.com/docs/loki/latest/setup/upgrade/
+  - https://grafana.com/docs/loki/latest/release-notes/
+  - https://status.grafana.com/
+checked: '2026-08-27'

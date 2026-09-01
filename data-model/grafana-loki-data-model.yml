@@ -1,0 +1,143 @@
+generated: '2026-08-27'
+method: derived
+source: >-
+  grpc/grafana-loki-push.proto, grpc/grafana-loki-logproto.proto and
+  https://grafana.com/docs/loki/latest/reference/loki-http-api/
+name: Grafana Loki data model
+description: >-
+  The entity graph Grafana Loki exposes over its APIs, derived from the published protobuf messages
+  and the documented HTTP response shapes. Loki's model is deliberately small: a stream is identified
+  entirely by its label set, entries hang off streams, and there is no server-assigned identifier for
+  anything an agent writes. The only ID Loki mints and hands back is a delete request ID.
+identifier_note: >-
+  There are no id-prefixed opaque identifiers in this API. A stream's identity IS its label set,
+  which is why label cardinality is the governing cost and correctness concern rather than key
+  management.
+entities:
+  - name: Stream
+    description: >-
+      A set of log entries sharing one unique label set. The unit of ingestion, of retention, of rate
+      limiting and of query selection.
+    identified_by: labels (the full label set, serialised as a Prometheus-style label matcher)
+    source: 'push.proto StreamAdapter; GET /loki/api/v1/series'
+    fields:
+      - {name: labels, type: string, description: 'Prometheus-style label set, e.g. {job="varlogs",host="a"}'}
+      - {name: entries, type: 'EntryAdapter[]', description: 'The log entries in this stream.'}
+      - {name: hash, type: uint64, description: 'Stream hash, used internally for routing.'}
+    relationships:
+      - {type: has_many, target: Entry, via: entries}
+      - {type: has_many, target: Label, via: labels}
+  - name: Entry
+    description: A single log line at a point in time, optionally carrying structured metadata and parsed fields.
+    identified_by: '(stream, timestamp) — no surrogate key'
+    source: 'push.proto EntryAdapter'
+    fields:
+      - {name: timestamp, type: 'google.protobuf.Timestamp', description: 'Nanosecond precision. On the JSON push path it MUST be sent as a string, not a number, or the endpoint returns 400.'}
+      - {name: line, type: string, description: The log line.}
+      - {name: structuredMetadata, type: 'LabelPairAdapter[]', description: 'Per-line key/value metadata that does not add stream cardinality.'}
+      - {name: parsed, type: 'LabelPairAdapter[]', description: 'Fields extracted by a parser stage at query time.'}
+    relationships:
+      - {type: belongs_to, target: Stream, via: stream label set}
+      - {type: has_many, target: StructuredMetadataPair, via: structuredMetadata}
+  - name: Label
+    description: >-
+      A key/value pair that is part of a stream's identity. Bounded by max_label_names_per_series
+      (15), max_label_name_length (1024 bytes) and max_label_value_length (2048 bytes).
+    identified_by: name
+    source: 'GET /loki/api/v1/labels, GET /loki/api/v1/label/{name}/values'
+    relationships:
+      - {type: has_many, target: LabelValue, via: 'GET /loki/api/v1/label/{name}/values'}
+  - name: StructuredMetadataPair
+    description: Per-entry metadata key/value, queryable but outside the stream identity.
+    source: 'push.proto LabelPairAdapter'
+    relationships:
+      - {type: belongs_to, target: Entry, via: structuredMetadata}
+  - name: QueryResult
+    description: >-
+      The envelope every query endpoint returns. resultType selects the shape of result: `streams`
+      (log lines), `matrix` (a table of values over time from a metric query), or `vector` (the
+      latest value per label set from an instant metric query).
+    source: 'https://grafana.com/docs/loki/latest/reference/loki-http-api/#format'
+    fields:
+      - {name: status, type: string, enum: [success, error]}
+      - {name: 'data.resultType', type: string, enum: [streams, matrix, vector]}
+      - {name: 'data.result', type: array}
+      - {name: 'data.stats', type: object}
+    relationships:
+      - {type: has_one, target: QueryStatistics, via: data.stats}
+      - {type: has_many, target: Stream, via: data.result}
+  - name: QueryStatistics
+    description: >-
+      Per-query cost accounting returned on every query response, split into ingester, store and
+      summary blocks (bytes and lines processed, chunks matched and downloaded, exec time, queue
+      time, throughput). This is the field an agent should read to learn what a query cost.
+    source: 'https://grafana.com/docs/loki/latest/reference/loki-http-api/#statistics'
+    groups: [ingester, store, summary]
+    relationships:
+      - {type: belongs_to, target: QueryResult, via: data.stats}
+  - name: IndexStats
+    description: >-
+      Pre-query estimate for a selector — streams, chunks, entries and bytes the selector would
+      touch. Returned by GET /loki/api/v1/index/stats and used by the Grafana MCP guardrail to refuse
+      a query before it runs.
+    source: 'GET /loki/api/v1/index/stats; logproto.proto IndexStatsResponse'
+    fields: [streams, chunks, entries, bytes]
+  - name: Pattern
+    description: A detected recurring log line structure with its sample counts over time.
+    source: 'GET /loki/api/v1/patterns'
+  - name: DetectedField
+    description: A field discovered inside log lines, with its inferred type and cardinality.
+    source: 'GET /loki/api/v1/detected_fields, GET /loki/api/v1/detected_field/{name}/values'
+  - name: RuleGroup
+    description: >-
+      A named group of alerting and recording rules inside a namespace, Prometheus-shaped with LogQL
+      in place of PromQL.
+    identified_by: '(namespace, groupName)'
+    source: 'rules.proto RuleGroupDesc; /loki/api/v1/rules/{namespace}/{groupName}'
+    relationships:
+      - {type: belongs_to, target: Namespace, via: namespace}
+      - {type: has_many, target: Rule, via: rules}
+  - name: Rule
+    description: An alerting or recording rule — expr (LogQL), for, labels, annotations.
+    source: 'rules.proto RuleDesc'
+    relationships:
+      - {type: belongs_to, target: RuleGroup, via: rule group}
+      - {type: has_many, target: Alert, via: firing instances}
+  - name: Namespace
+    description: The container a rule group belongs to. Addressed as a path segment.
+    source: '/loki/api/v1/rules/{namespace}'
+    relationships:
+      - {type: has_many, target: RuleGroup, via: 'GET /loki/api/v1/rules/{namespace}'}
+  - name: Alert
+    description: A firing instance of an alerting rule, served on the Prometheus-compatible path.
+    source: 'GET /prometheus/api/v1/alerts'
+    relationships:
+      - {type: belongs_to, target: Rule, via: rule}
+  - name: DeleteRequest
+    description: >-
+      A submitted log deletion request. The only server-minted identifier in the whole API: the
+      request_id returned by POST /loki/api/v1/delete is what DELETE /loki/api/v1/delete needs to
+      cancel it inside the delete_request_cancel_period (default 24h).
+    identified_by: request_id
+    source: '/loki/api/v1/delete'
+    fields:
+      - {name: request_id, type: string}
+      - {name: query, type: string, description: 'LogQL selector naming what to delete.'}
+      - {name: start, type: timestamp}
+      - {name: end, type: timestamp}
+      - {name: status, type: string, description: 'Processed or unprocessed. Canceled requests are removed from storage and do not appear in listings.'}
+    relationships:
+      - {type: has_one, target: Stream, via: query selector}
+  - name: Tenant
+    description: >-
+      The isolation boundary. Not an addressable resource — there is no tenant CRUD API. A tenant
+      exists because a request carried its ID in X-Scope-OrgID (or in the Basic auth user field on
+      Grafana Cloud).
+    identified_by: 'X-Scope-OrgID header value'
+    source: https://grafana.com/docs/loki/latest/operations/multi-tenancy/
+    relationships:
+      - {type: has_many, target: Stream, via: X-Scope-OrgID}
+entity_count: 15
+relationship_count: 14
+render: null
+checked: '2026-08-27'
