@@ -1,17 +1,17 @@
 ---
 kin_checks:
   slug: grafana-loki
-  schema_version: 0.17.2
-  scored_at: '2026-09-01'
-  run_ts: 2026-09-01T063623
+  schema_version: 0.18.2
+  scored_at: '2026-09-04'
+  run_ts: 2026-09-04T062714
   note: Actionable checks only (missed + partial). earned/na are every other check
-    in rubric/scoring-0.17.2.yml; counts below let you verify that.
+    in rubric/scoring-0.18.2.yml; counts below let you verify that.
   counts:
-    total: 130
-    earned: 50
-    partial: 6
+    total: 132
+    earned: 48
+    partial: 8
     missed: 32
-    na: 42
+    na: 44
   checks:
   - id: well_known_published
     status: missed
@@ -81,6 +81,9 @@ kin_checks:
     status: partial
     earned: 1.0
     detail: pointer liveness 0.5
+  - id: agent_skill_present
+    status: partial
+    earned: 0.75
   - id: mcp_server
     status: partial
     earned: 4.8
@@ -101,3 +104,7 @@ kin_checks:
     status: partial
     earned: 3.5
     detail: 'grade: documented'
+  - id: agent_skills
+    status: partial
+    earned: 1.25
+    detail: 'authorship: derived'
