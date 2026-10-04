@@ -55,7 +55,7 @@ tags:
 - Log Aggregation
 - Observability
 - Monitoring
-- Open-Source
+- Open Source
 - LogQL
 - OpenTelemetry
 - Telemetry
@@ -74,6 +74,7 @@ tags_raw:
 - Telemetry
 - Kubernetes
 - Cloud Native
+- Open-Source
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
