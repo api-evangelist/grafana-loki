@@ -47,7 +47,7 @@ x-type: company
 x-source: harvest:self-hosted-agent-stack
 specificationVersion: '0.20'
 created: '2026-08-27'
-modified: '2026-08-27'
+modified: '2026-10-06'
 tags:
 - Company
 - Logs
@@ -160,6 +160,8 @@ apis:
   - type: GitHubOrganization
     url: https://github.com/grafana/mcp-grafana
 common:
+- url: https://grafana.com/blog/index.xml
+  type: BlogRSS
 - type: License
   name: AGPL-3.0
   url: https://github.com/grafana/loki/blob/main/LICENSE
