@@ -129,3 +129,18 @@ guardrails:
     default: 100
 tool_count: 7
 checked: '2026-08-27'
+rfc9728:
+  endpoint: https://mcp.grafana.com/mcp
+  metadata_url: https://mcp.grafana.com/.well-known/oauth-protected-resource/mcp
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://mcp.grafana.com/mcp
+    authorization_servers:
+    - https://mcp.grafana.com/mcp
+    scopes_supported:
+    - grafana:read
+    - grafana:query
+    - grafana:write
