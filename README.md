@@ -64,5 +64,127 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Grafana Loki is a company surfaced via the API Evangelist harvest backlog (source: self-hosted-agent-stack) and added to the network as a stub for full-pipeline profiling.
-- https://grafana.com/oss/loki/
+Grafana Loki is Grafana Labs' open source log aggregation system — "like Prometheus, but for logs." Rather than full-text indexing log contents, Loki indexes only a small set of labels per log stream and stores the compressed lines in object storage, which is what makes it cheap to run at scale. It is queried with LogQL, a Prometheus-inspired query language, over an HTTP API that covers ingestion, querying, label and pattern discovery, live tailing over WebSocket, a Prometheus-compatible ruler for alerting and recording rules, and a cancellable log deletion API. Loki accepts native pushes and OpenTelemetry OTLP/HTTP logs, publishes proto3 gRPC service definitions for its push and query paths, and ships a first-party CLI (LogCLI), Helm charts, a Kubernetes operator, and Docker images. It is licensed AGPL-3.0 and self-hosted; the same engine is sold as the managed Grafana Cloud Logs service and as the self-managed Grafana Enterprise Logs distribution.
+
+**Areas:** Company · Logs · Logging · Log Aggregation · Observability · Monitoring · Open Source · LogQL · OpenTelemetry · Telemetry · Kubernetes · Cloud-Native
+
+## Grafana Loki on APIs.io
+
+Everything profiled for Grafana Loki is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/grafana-loki/](https://apis.io/providers/grafana-loki/)** — or go straight to one of the APIs or properties below.
+
+### APIs (3)
+
+- [Loki HTTP API](https://apis.io/apis/grafana-loki/loki-http-api/) — The Grafana Loki HTTP API — 40 documented endpoints for pushing logs (native and OTLP), querying with LogQL over instants and ranges, discovering labels,…
+- [Grafana Cloud Logs API](https://apis.io/apis/grafana-loki/grafana-cloud-logs-api/) — Grafana Cloud Logs is the fully managed Grafana Loki service. It serves the same Loki HTTP API on a per-stack host of the form…
+- [Grafana MCP Server — Loki tools](https://apis.io/apis/grafana-loki/grafana-mcp-loki-tools/) — Grafana Loki reaches MCP clients through the Grafana Labs MCP servers, which register a Loki tool family (query_loki_logs, list_loki_label_names,…
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [Grafana MCP server (Loki tools)](https://apis.io/servers/grafana-loki/grafana-mcp-server-loki-tools/)
+
+#### Security (4)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Grafana Loki Authentication](https://apis.io/security/grafana-loki/grafana-loki-authentication/)
+- [Grafana Loki Domain Security](https://apis.io/security/grafana-loki/grafana-loki-domain-security/)
+- [Grafana Loki Trust Center](https://apis.io/security/grafana-loki/grafana-loki-trust-center/)
+- [Grafana Loki Vulnerability Disclosure](https://apis.io/security/grafana-loki/grafana-loki-vulnerability-disclosure/)
+
+#### OAuth scopes (1)
+
+The permissions the API asks for.
+
+- [Grafana Loki Scopes](https://apis.io/scopes/grafana-loki/grafana-loki-scopes/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Grafana Loki Plans Pricing](https://apis.io/plans/grafana-loki/grafana-loki-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Grafana Loki Rate Limits](https://apis.io/rate-limits/grafana-loki/grafana-loki-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://grafana.com/oss/loki/)
+- [Documentation](https://grafana.com/docs/loki/latest/)
+- [Getting started](https://grafana.com/docs/loki/latest/get-started/)
+- [API reference](https://grafana.com/docs/loki/latest/reference/loki-http-api/)
+- [Pricing](https://grafana.com/pricing/)
+- [Sign up](https://grafana.com/auth/sign-up/create-user)
+- [Support](https://community.grafana.com/)
+- [Blog](https://grafana.com/blog/)
+- [Security](https://grafana.com/security/)
+- [Compliance](https://grafana.com/legal/security-compliance/)
+- [Terms of service](https://grafana.com/legal/terms/)
+- [Privacy policy](https://grafana.com/legal/privacy-policy/)
+- [GitHub](https://github.com/grafana)
+- [Status](https://status.grafana.com/)
+
+## API Evangelist rating
+
+**Kin Score 66.1** — strong · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 80.0 |
+| Contract quality | 24.0 |
+| Contract governance | 18.2 |
+| Operational transparency | 84.2 |
+| Developer ergonomics | 80.4 |
+| Access clarity | 92.1 |
+
+**Agent readiness 49.8** — agent-native
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | verified |
+| Auth Clarity | served (partial credit) |
+| Idempotency | documented (partial credit) |
+| Error Semantics | documented (partial credit) |
+| OpenAPI Examples | — |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | — |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | served (partial credit) |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | yes |
+| Agentic Commerce | — |
+| Pagination Ratio | na |
+| Operation Distinctiveness | na |
+
+**Regulatory alignment 45.1** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/grafana-loki/](https://apis.io/providers/grafana-loki/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Grafana Loki: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/grafana-loki/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
